@@ -1,0 +1,8 @@
+{
+  "name": "AgriExpert Pro",
+  "description": "Expert dashboard for agricultural consultation, IoT monitoring, and reporting.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

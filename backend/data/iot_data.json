@@ -1,0 +1,16 @@
+[
+    {
+        "ioTDataID": 1001,
+        "fieldID": 1,
+        "locationLat": 23.8103,
+        "locationLng": 90.4125,
+        "soilTemp": 28.5,
+        "soilMoisture": 45.2,
+        "soilPH": 6.5,
+        "soilEC": 1.2,
+        "soilN": 15.0,
+        "soilP": 5.0,
+        "soilK": 10.0,
+        "createTime": "2023-10-27T10:00:00"
+    }
+]

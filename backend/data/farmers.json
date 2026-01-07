@@ -1,0 +1,30 @@
+[
+    {
+        "farmerID": 1,
+        "farmerName": "Rahim MIA",
+        "farmerDivision": "Dhaka",
+        "farmerDistrict": "Dhaka",
+        "farmerUpazila": "Savar",
+        "farmerAddress": "123 Village Road",
+        "farmerPhoneNumber": "01700000000",
+        "farmerProfilePicture": "https://via.placeholder.com/150",
+        "farmerNID": "1234567890",
+        "farmerPassword": "password",
+        "isSmartPhoneUser": true,
+        "createTime": "2023-10-27T10:00:00"
+    },
+    {
+        "farmerID": 2,
+        "farmerName": "Abrar Khan Alvi",
+        "farmerDivision": "dhaka",
+        "farmerDistrict": "dhaka",
+        "farmerUpazila": "dhaka",
+        "farmerAddress": "dhakadhakadhakadhakadhaka",
+        "farmerPhoneNumber": "01700000001",
+        "farmerProfilePicture": null,
+        "farmerNID": null,
+        "farmerPassword": "password",
+        "isSmartPhoneUser": true,
+        "createTime": "2026-01-07T06:14:35.125861"
+    }
+]

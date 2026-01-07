@@ -1,0 +1,32 @@
+[
+    {
+        "fieldID": 1,
+        "farmerID": 1,
+        "fieldName": "North Field",
+        "fieldCoordinates": [
+            {
+                "lat": 23.8103,
+                "lng": 90.4125
+            }
+        ],
+        "fieldArea": 2.5,
+        "fieldCropName": "Rice",
+        "fieldCropHarvestTime": "2023-12-01T00:00:00",
+        "createTime": "2023-10-01T00:00:00"
+    },
+    {
+        "fieldID": 2,
+        "farmerID": 1,
+        "fieldName": "South Garden",
+        "fieldCoordinates": [
+            {
+                "lat": 23.8000,
+                "lng": 90.4000
+            }
+        ],
+        "fieldArea": 1.0,
+        "fieldCropName": "Tomato",
+        "fieldCropHarvestTime": "2024-01-15T00:00:00",
+        "createTime": "2023-10-05T00:00:00"
+    }
+]

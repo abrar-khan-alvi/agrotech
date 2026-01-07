@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Strategy Builder</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "panel-dark": "#181b21",
+                        "card-dark": "#22262e",
+                        "border-dark": "#283039",
+                        "text-secondary": "#9dabb9",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #181b21; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b4754; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563; 
+        }
+
+        /* Dot pattern for canvas */
+        .bg-dot-pattern {
+            background-image: radial-gradient(#3b4754 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        /* Node connection lines */
+        .connection-line {
+            stroke: #3b4754;
+            stroke-width: 2;
+            fill: none;
+        }
+        .connection-line.active {
+            stroke: #137fec;
+            stroke-width: 3;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden flex flex-col h-screen antialiased">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark dark:bg-background-dark bg-white px-6 py-3 shrink-0 z-20">
+<div class="flex items-center gap-4">
+<div class="size-8 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">token</span>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">AI Trading Platform</h2>
+<div class="h-6 w-px bg-border-dark mx-2"></div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-text-secondary hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-white text-sm font-medium border-b-2 border-primary pb-0.5" href="#">Strategy Builder</a>
+<a class="text-text-secondary hover:text-primary text-sm font-medium transition-colors" href="#">Marketplace</a>
+<a class="text-text-secondary hover:text-primary text-sm font-medium transition-colors" href="#">Portfolio</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3">
+<button class="text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 ring-2 ring-border-dark" data-alt="User profile avatar showing a colorful abstract gradient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAHDRNCuqO4IyJ3O7FIsEcvQGzPnVoOxWAD-9SydAD_2svkKfrN-QcXQIpTLxvNpHdfg_s-73Lr2wMQN9QWm1pyLHIoU4SY3G16j73eedgVr5_6V6clkfZ6hLNynDi1r4YY5lQkdLmGeBFUIOx9J-oNn0CPIHsAJYocHYd6StvmhXELDIgAX7-Nc3jFffaT1RlxHGDVa9NvmgsPCMgsfRxCRaSyj4SLxXnfFk7qcFeXYeOEVrYP6yzOaucl-XRqcSxHvhteFLeUDPY");'>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- Left Sidebar: Component Library -->
+<aside class="w-72 flex flex-col border-r border-border-dark dark:bg-panel-dark bg-white z-10 shrink-0">
+<div class="p-4 border-b border-border-dark">
+<h1 class="text-base font-semibold mb-1">Toolbox</h1>
+<p class="text-text-secondary text-xs">Drag nodes to canvas</p>
+</div>
+<!-- Search -->
+<div class="px-4 py-3">
+<div class="flex w-full items-center rounded-lg bg-card-dark border border-border-dark focus-within:border-primary transition-colors">
+<div class="text-text-secondary pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="w-full bg-transparent border-none text-sm text-white placeholder-text-secondary focus:ring-0 py-2 pl-2 pr-4" placeholder="Find nodes..."/>
+</div>
+</div>
+<!-- Library Accordions -->
+<div class="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
+<!-- Triggers -->
+<details class="group" open="">
+<summary class="flex cursor-pointer items-center justify-between py-2 text-sm font-medium text-white select-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-400 text-[18px]">bolt</span>
+                            Triggers
+                        </div>
+<span class="material-symbols-outlined text-text-secondary text-[20px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="flex flex-col gap-2 pt-1 pb-2 pl-2 border-l border-border-dark ml-2">
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-purple-400 text-xs font-bold">TIC</span>
+<span class="text-xs text-white">Market Tick</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-purple-400 text-xs font-bold">TMR</span>
+<span class="text-xs text-white">Timer Interval</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-purple-400 text-xs font-bold">EVT</span>
+<span class="text-xs text-white">On Order Fill</span>
+</div>
+</div>
+</details>
+<!-- Technical Indicators -->
+<details class="group" open="">
+<summary class="flex cursor-pointer items-center justify-between py-2 text-sm font-medium text-white select-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-400 text-[18px]">query_stats</span>
+                            Indicators
+                        </div>
+<span class="material-symbols-outlined text-text-secondary text-[20px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="flex flex-col gap-2 pt-1 pb-2 pl-2 border-l border-border-dark ml-2">
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-blue-400 text-xs font-bold">RSI</span>
+<span class="text-xs text-white">Relative Strength Index</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-blue-400 text-xs font-bold">SMA</span>
+<span class="text-xs text-white">Simple Moving Avg</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-blue-400 text-xs font-bold">MACD</span>
+<span class="text-xs text-white">MACD</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-blue-400 text-xs font-bold">BB</span>
+<span class="text-xs text-white">Bollinger Bands</span>
+</div>
+</div>
+</details>
+<!-- Logic -->
+<details class="group" open="">
+<summary class="flex cursor-pointer items-center justify-between py-2 text-sm font-medium text-white select-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-yellow-400 text-[18px]">functions</span>
+                            Logic
+                        </div>
+<span class="material-symbols-outlined text-text-secondary text-[20px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="flex flex-col gap-2 pt-1 pb-2 pl-2 border-l border-border-dark ml-2">
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-yellow-400 text-xs font-bold">IF</span>
+<span class="text-xs text-white">Condition (If/Else)</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-yellow-400 text-xs font-bold">AND</span>
+<span class="text-xs text-white">Logical AND</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-yellow-400 text-xs font-bold">CRS</span>
+<span class="text-xs text-white">Crossover</span>
+</div>
+</div>
+</details>
+<!-- Actions -->
+<details class="group">
+<summary class="flex cursor-pointer items-center justify-between py-2 text-sm font-medium text-white select-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-400 text-[18px]">shopping_cart</span>
+                            Trade Actions
+                        </div>
+<span class="material-symbols-outlined text-text-secondary text-[20px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="flex flex-col gap-2 pt-1 pb-2 pl-2 border-l border-border-dark ml-2">
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-green-400 text-xs font-bold">BUY</span>
+<span class="text-xs text-white">Open Long</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-green-400 text-xs font-bold">SELL</span>
+<span class="text-xs text-white">Open Short</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded bg-card-dark hover:bg-border-dark border border-border-dark cursor-grab active:cursor-grabbing">
+<span class="text-green-400 text-xs font-bold">CLS</span>
+<span class="text-xs text-white">Close Position</span>
+</div>
+</div>
+</details>
+</div>
+</aside>
+<!-- Center: Canvas Area -->
+<main class="flex-1 flex flex-col relative min-w-0">
+<!-- Strategy Toolbar -->
+<div class="flex items-center justify-between px-6 py-3 bg-panel-dark border-b border-border-dark shrink-0 z-10">
+<div class="flex flex-col">
+<div class="flex items-center gap-3">
+<h1 class="text-white text-lg font-bold leading-tight">Momentum Alpha v3</h1>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/20 text-yellow-500 uppercase tracking-wide border border-yellow-500/30">Draft</span>
+</div>
+<p class="text-text-secondary text-xs mt-0.5">Last edited 2 mins ago</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border-dark bg-card-dark hover:bg-border-dark text-white text-sm font-medium transition-colors">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                        Save
+                    </button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent bg-primary hover:bg-blue-600 text-white text-sm font-medium transition-colors shadow-lg shadow-blue-900/20">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                        Run Backtest
+                    </button>
+<button class="flex items-center justify-center size-8 rounded-lg border border-border-dark bg-card-dark hover:bg-border-dark text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Visual Canvas -->
+<div class="flex-1 relative bg-background-dark bg-dot-pattern overflow-hidden cursor-crosshair group/canvas">
+<!-- Floating Controls -->
+<div class="absolute bottom-6 left-6 flex flex-col gap-2 z-10">
+<button class="size-8 flex items-center justify-center bg-card-dark border border-border-dark rounded hover:bg-panel-dark text-white shadow-lg">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+<button class="size-8 flex items-center justify-center bg-card-dark border border-border-dark rounded hover:bg-panel-dark text-white shadow-lg">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<button class="size-8 flex items-center justify-center bg-card-dark border border-border-dark rounded hover:bg-panel-dark text-white shadow-lg">
+<span class="material-symbols-outlined text-[20px]">center_focus_strong</span>
+</button>
+</div>
+<!-- SVG Layer for connections -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+<!-- Path from Start to Crossover -->
+<path class="connection-line active" d="M 180 150 C 230 150, 230 240, 300 240"></path>
+<!-- Path from Crossover to RSI Check -->
+<path class="connection-line" d="M 500 240 C 550 240, 550 180, 600 180"></path>
+<!-- Path from RSI Check to Buy -->
+<path class="connection-line" d="M 800 180 C 850 180, 850 180, 900 180"></path>
+</svg>
+<!-- Node: Start -->
+<div class="absolute top-[120px] left-[60px] w-[120px] bg-card-dark border border-border-dark rounded-lg shadow-xl z-10 ring-1 ring-purple-500/50">
+<div class="bg-panel-dark px-3 py-2 rounded-t-lg border-b border-border-dark flex items-center justify-between">
+<span class="text-xs font-bold text-purple-400">Market Tick</span>
+<span class="material-symbols-outlined text-text-secondary text-[14px]">bolt</span>
+</div>
+<div class="p-3">
+<div class="text-[10px] text-text-secondary uppercase mb-1">Asset</div>
+<div class="text-xs text-white font-mono bg-background-dark px-2 py-1 rounded">BTC-USD</div>
+</div>
+<div class="absolute top-1/2 -right-1.5 size-3 bg-purple-500 rounded-full border-2 border-card-dark"></div>
+</div>
+<!-- Node: Logic (Crossover) -->
+<div class="absolute top-[180px] left-[300px] w-[200px] bg-card-dark border border-border-dark rounded-lg shadow-xl z-10">
+<div class="bg-panel-dark px-3 py-2 rounded-t-lg border-b border-border-dark flex items-center justify-between">
+<span class="text-xs font-bold text-yellow-400">Crossover (SMA)</span>
+<span class="material-symbols-outlined text-text-secondary text-[14px]">show_chart</span>
+</div>
+<div class="p-3 space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="text-[10px] text-text-secondary">Fast Period</span>
+<input class="w-12 h-6 text-xs bg-background-dark border-border-dark rounded text-right focus:border-primary focus:ring-0 text-white" type="number" value="20"/>
+</div>
+<div class="flex items-center justify-between gap-2">
+<span class="text-[10px] text-text-secondary">Slow Period</span>
+<input class="w-12 h-6 text-xs bg-background-dark border-border-dark rounded text-right focus:border-primary focus:ring-0 text-white" type="number" value="50"/>
+</div>
+</div>
+<div class="absolute top-1/2 -left-1.5 size-3 bg-text-secondary rounded-full border-2 border-card-dark"></div>
+<div class="absolute top-1/2 -right-1.5 size-3 bg-yellow-500 rounded-full border-2 border-card-dark"></div>
+</div>
+<!-- Node: Condition (RSI Filter) -->
+<div class="absolute top-[120px] left-[600px] w-[200px] bg-card-dark border border-border-dark rounded-lg shadow-xl z-10">
+<div class="bg-panel-dark px-3 py-2 rounded-t-lg border-b border-border-dark flex items-center justify-between">
+<span class="text-xs font-bold text-yellow-400">Filter (RSI)</span>
+<span class="material-symbols-outlined text-text-secondary text-[14px]">filter_alt</span>
+</div>
+<div class="p-3 space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="text-[10px] text-text-secondary">Period</span>
+<input class="w-12 h-6 text-xs bg-background-dark border-border-dark rounded text-right focus:border-primary focus:ring-0 text-white" type="number" value="14"/>
+</div>
+<div class="flex items-center justify-between gap-2">
+<span class="text-[10px] text-text-secondary">Logic</span>
+<select class="h-6 text-xs bg-background-dark border-border-dark rounded focus:border-primary focus:ring-0 text-white py-0 pl-1 pr-6">
+<option>&lt;</option>
+<option>&gt;</option>
+</select>
+</div>
+<div class="flex items-center justify-between gap-2">
+<span class="text-[10px] text-text-secondary">Threshold</span>
+<input class="w-12 h-6 text-xs bg-background-dark border-border-dark rounded text-right focus:border-primary focus:ring-0 text-white" type="number" value="30"/>
+</div>
+</div>
+<div class="absolute top-1/2 -left-1.5 size-3 bg-text-secondary rounded-full border-2 border-card-dark"></div>
+<div class="absolute top-1/2 -right-1.5 size-3 bg-yellow-500 rounded-full border-2 border-card-dark"></div>
+</div>
+<!-- Node: Action (Buy) -->
+<div class="absolute top-[120px] left-[900px] w-[160px] bg-card-dark border border-border-dark rounded-lg shadow-xl z-10 ring-1 ring-green-500/50">
+<div class="bg-panel-dark px-3 py-2 rounded-t-lg border-b border-border-dark flex items-center justify-between">
+<span class="text-xs font-bold text-green-400">Open Long</span>
+<span class="material-symbols-outlined text-text-secondary text-[14px]">shopping_cart</span>
+</div>
+<div class="p-3 space-y-2">
+<div class="flex items-center justify-between gap-2">
+<span class="text-[10px] text-text-secondary">Risk %</span>
+<div class="flex items-center bg-background-dark rounded border border-border-dark px-2">
+<input class="w-8 h-6 text-xs bg-transparent border-none p-0 text-right focus:ring-0 text-white" type="number" value="2.5"/>
+<span class="text-[10px] text-text-secondary ml-1">%</span>
+</div>
+</div>
+<div class="text-[10px] text-green-400 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                            Ready to execute
+                        </div>
+</div>
+<div class="absolute top-1/2 -left-1.5 size-3 bg-green-500 rounded-full border-2 border-card-dark"></div>
+</div>
+</div>
+<!-- Bottom Panel (Collapsed Log) -->
+<div class="bg-panel-dark border-t border-border-dark">
+<div class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-card-dark">
+<div class="flex items-center gap-2 text-text-secondary text-xs">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span>Console Output</span>
+<span class="bg-primary/20 text-primary px-1.5 rounded-sm text-[10px]">No errors</span>
+</div>
+<span class="material-symbols-outlined text-text-secondary text-[16px]">expand_less</span>
+</div>
+</div>
+</main>
+<!-- Right Sidebar: Analytics & Backtest -->
+<aside class="w-80 flex flex-col border-l border-border-dark dark:bg-panel-dark bg-white z-10 shrink-0 overflow-y-auto">
+<div class="p-4 border-b border-border-dark">
+<h2 class="text-base font-semibold text-white">Backtest Results</h2>
+<p class="text-xs text-text-secondary mt-1">Period: Jan 01 - Jun 30, 2023</p>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-px bg-border-dark border-b border-border-dark">
+<div class="bg-panel-dark p-4 flex flex-col gap-1">
+<span class="text-xs text-text-secondary">Net Profit</span>
+<span class="text-lg font-bold text-green-400">+$12,450</span>
+<span class="text-[10px] text-green-500 font-medium">+24.5%</span>
+</div>
+<div class="bg-panel-dark p-4 flex flex-col gap-1">
+<span class="text-xs text-text-secondary">Win Rate</span>
+<span class="text-lg font-bold text-white">68.4%</span>
+<span class="text-[10px] text-text-secondary">142 Trades</span>
+</div>
+<div class="bg-panel-dark p-4 flex flex-col gap-1">
+<span class="text-xs text-text-secondary">Profit Factor</span>
+<span class="text-lg font-bold text-white">1.85</span>
+</div>
+<div class="bg-panel-dark p-4 flex flex-col gap-1">
+<span class="text-xs text-text-secondary">Max Drawdown</span>
+<span class="text-lg font-bold text-red-400">-12.3%</span>
+</div>
+</div>
+<!-- Equity Curve Chart Placeholder -->
+<div class="p-4 border-b border-border-dark">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-sm font-medium text-white">Equity Curve</h3>
+<button class="text-primary text-xs font-medium hover:underline">Full Report</button>
+</div>
+<!-- Simulated Chart -->
+<div class="relative h-40 w-full bg-background-dark rounded-lg border border-border-dark overflow-hidden flex items-end px-1 pt-4 pb-0 group">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between py-2 px-2 pointer-events-none">
+<div class="w-full h-px bg-border-dark border-t border-dashed border-gray-700"></div>
+<div class="w-full h-px bg-border-dark border-t border-dashed border-gray-700"></div>
+<div class="w-full h-px bg-border-dark border-t border-dashed border-gray-700"></div>
+</div>
+<!-- CSS/HTML Chart Representation -->
+<div class="relative w-full h-full flex items-end">
+<!-- Using a background gradient to simulate the area chart -->
+<div class="absolute bottom-0 left-0 right-0 top-10 bg-gradient-to-t from-primary/20 to-transparent" style="clip-path: polygon(0% 100%, 0% 80%, 10% 85%, 20% 70%, 30% 75%, 40% 50%, 50% 55%, 60% 30%, 70% 35%, 80% 10%, 90% 15%, 100% 0%, 100% 100%);"></div>
+<!-- The Line itself -->
+<div class="absolute inset-0" style="background: linear-gradient(to right, #137fec, #137fec); height: 2px; top: 0; left: 0; clip-path: polygon(0% 100%, 0% 80%, 10% 85%, 20% 70%, 30% 75%, 40% 50%, 50% 55%, 60% 30%, 70% 35%, 80% 10%, 90% 15%, 100% 0%, 100% 2px, 90% 17%, 80% 12%, 70% 37%, 60% 32%, 50% 57%, 40% 52%, 30% 77%, 20% 72%, 10% 87%, 0% 82%); background-color: #137fec;"></div>
+<!-- Tooltip interaction simulation -->
+<div class="absolute top-[20%] left-[60%] size-2 bg-white rounded-full shadow border border-primary z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute top-[5%] left-[60%] bg-panel-dark text-[10px] text-white px-2 py-1 rounded border border-border-dark opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Eq: $11,204
+                        </div>
+</div>
+</div>
+</div>
+<!-- Recent Trades List -->
+<div class="flex-1 flex flex-col min-h-0">
+<div class="p-4 pb-2">
+<h3 class="text-sm font-medium text-white">Recent Trades</h3>
+</div>
+<div class="flex-1 overflow-y-auto px-4 pb-4">
+<div class="flex flex-col gap-2">
+<!-- Trade Item -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-card-dark border border-border-dark hover:border-primary/50 transition-colors cursor-pointer group">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-green-400">LONG</span>
+<span class="text-xs text-white">BTC-USD</span>
+</div>
+<span class="text-[10px] text-text-secondary">02 Jun 14:30</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs font-bold text-green-400">+$245.00</span>
+<span class="text-[10px] text-text-secondary group-hover:text-primary">View Log</span>
+</div>
+</div>
+<!-- Trade Item -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-card-dark border border-border-dark hover:border-primary/50 transition-colors cursor-pointer group">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-red-400">SHORT</span>
+<span class="text-xs text-white">ETH-USD</span>
+</div>
+<span class="text-[10px] text-text-secondary">02 Jun 12:15</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs font-bold text-red-400">-$42.50</span>
+<span class="text-[10px] text-text-secondary group-hover:text-primary">View Log</span>
+</div>
+</div>
+<!-- Trade Item -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-card-dark border border-border-dark hover:border-primary/50 transition-colors cursor-pointer group">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-green-400">LONG</span>
+<span class="text-xs text-white">SOL-USD</span>
+</div>
+<span class="text-[10px] text-text-secondary">01 Jun 09:45</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs font-bold text-green-400">+$120.10</span>
+<span class="text-[10px] text-text-secondary group-hover:text-primary">View Log</span>
+</div>
+</div>
+<!-- Trade Item -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-card-dark border border-border-dark hover:border-primary/50 transition-colors cursor-pointer group">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-green-400">LONG</span>
+<span class="text-xs text-white">BTC-USD</span>
+</div>
+<span class="text-[10px] text-text-secondary">31 May 22:10</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs font-bold text-green-400">+$85.00</span>
+<span class="text-[10px] text-text-secondary group-hover:text-primary">View Log</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

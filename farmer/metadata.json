@@ -1,0 +1,9 @@
+{
+  "name": "AgriConnect Farmer",
+  "description": "A comprehensive advisory and consultation platform for farmers, featuring AI support and expert connection.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "AgriGuard Admin",
+  "description": "Comprehensive admin dashboard for managing farmers, experts, advisory services, and sustainability metrics.",
+  "requestFramePermissions": []
+}

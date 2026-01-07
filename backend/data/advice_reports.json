@@ -1,0 +1,43 @@
+[
+    {
+        "reportId": 1,
+        "sourceType": "EXPERT",
+        "sourceId": 101,
+        "fieldId": 1,
+        "riskType": "nutrient",
+        "severity": "medium",
+        "confidence": 1.0,
+        "advices": [
+            {
+                "action": "Use urea fertilizer",
+                "quantity": "5",
+                "unit": "kg",
+                "timing": "Morning",
+                "priority": 1
+            }
+        ],
+        "evidence": "Leaf yellowing observed",
+        "createdAt": "2023-10-27T00:00:00"
+    },
+    {
+        "reportId": 2,
+        "sourceType": "AI",
+        "sourceId": "AgroAI-v1.2",
+        "fieldId": 1,
+        "riskType": "disease",
+        "severity": "high",
+        "confidence": 0.89,
+        "advices": [
+            {
+                "action": "Apply fungicide",
+                "priority": 1
+            },
+            {
+                "action": "Monitor water level",
+                "priority": 2
+            }
+        ],
+        "evidence": "Image analysis detected Blast symptoms",
+        "createdAt": "2023-10-27T00:00:00"
+    }
+]

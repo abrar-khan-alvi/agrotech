@@ -1,0 +1,18 @@
+[
+    {
+        "id": 1,
+        "farmer_name": "Rahim MIA",
+        "status": "pending",
+        "query": "My rice leaves are turning yellow.",
+        "timestamp": "2023-10-26T14:30:00Z",
+        "image": "https://via.placeholder.com/300"
+    },
+    {
+        "id": 2,
+        "farmer_name": "Abdul K",
+        "status": "replied",
+        "query": "Pest control needed for tomatoes.",
+        "timestamp": "2023-10-25T09:00:00Z",
+        "image": "https://via.placeholder.com/300"
+    }
+]
