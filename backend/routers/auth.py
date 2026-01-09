@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 from schemas import Farmer, Expert, UserStatus
 from datetime import datetime
-from db import JSONDatabase
+from db_firebase import FirebaseDatabase
+import base64
 
 router = APIRouter()
-db_farmers = JSONDatabase("farmers")
-db_experts = JSONDatabase("experts")
+db_farmers = FirebaseDatabase("farmers")
+db_experts = FirebaseDatabase("experts")
 
 # --- Models ---
 class PhoneRequest(BaseModel):
@@ -28,18 +29,32 @@ MOCK_TOKENS = {
     "pre_auth_token": "mock_pre_auth_token_abcde"
 }
 
+# --- Helper ---
+def normalize_phone(phone: Any) -> str:
+    if not phone:
+        return ""
+    p = str(phone).strip()
+    return p.lstrip("0")
+
 # --- Farmer Auth Endpoints ---
 
 @router.post("/auth/check-status/")
 async def check_status(req: PhoneRequest):
     farmers = db_farmers.load()
-    farmer = next((f for f in farmers if f["farmerPhoneNumber"] == req.phone), None)
+    print(f"DEBUG: Checking status for {req.phone}")
+    
+    req_phone_norm = normalize_phone(req.phone)
+    
+    # Robust matching
+    farmer = next((f for f in farmers if normalize_phone(f.get("farmerPhoneNumber")) == req_phone_norm), None)
     
     if farmer:
+        print(f"DEBUG: Found farmer {farmer.get('farmerName')}")
         # Check if password exists and is not null/empty
         is_password_set = bool(farmer.get("farmerPassword"))
         return {"exists": True, "is_password_set": is_password_set}
     
+    print("DEBUG: Farmer not found")
     return {"exists": False, "is_password_set": False}
 
 @router.post("/auth/otp/send/")
@@ -50,7 +65,8 @@ async def send_otp_farmer(req: PhoneRequest):
 async def verify_otp_farmer(req: VerifyOtpRequest):
     if req.code == "1234":
         farmers = db_farmers.load()
-        farmer_data = next((f for f in farmers if f["farmerPhoneNumber"] == req.phone), None)
+        req_phone_norm = normalize_phone(req.phone)
+        farmer_data = next((f for f in farmers if normalize_phone(f.get("farmerPhoneNumber")) == req_phone_norm), None)
         
         if farmer_data:
             return {
@@ -99,7 +115,8 @@ async def register_farmer(req: dict):
 @router.post("/auth/login/")
 async def login_farmer(req: LoginRequest):
     farmers = db_farmers.load()
-    farmer_data = next((f for f in farmers if f["farmerPhoneNumber"] == req.phone), None)
+    req_phone_norm = normalize_phone(req.phone)
+    farmer_data = next((f for f in farmers if normalize_phone(f.get("farmerPhoneNumber")) == req_phone_norm), None)
     
     # Match password from DB
     if farmer_data:
@@ -112,6 +129,113 @@ async def login_farmer(req: LoginRequest):
             }
     
     raise HTTPException(status_code=400, detail="Invalid credentials")
+
+@router.patch("/profile/")
+async def update_profile(profile_data: dict):
+    print(f"DEBUG: update_profile called with {profile_data}")
+    # In a real app, we'd get the user ID from the token dependency.
+    # Here, we'll expect the frontend to send the ID or we'll look it up via phone if provided.
+    # Let's assume the frontend sends the user ID in the body for this mock
+    
+    farmer_id = profile_data.get("id") or profile_data.get("farmerID")
+    if not farmer_id:
+        raise HTTPException(status_code=400, detail="Farmer ID is required")
+        
+    # We need to find the key in Firebase.
+    # Since we are using FirebaseDatabase wrapper, let's use the update method IF we knew the key.
+    # Or cleaner: load all, find matching ID, update that specific item.
+    
+    farmers = db_farmers.load()
+    # Find index and object
+    target_idx = -1
+    target_farmer = None
+    
+    # Check if ID is int or str in DB
+    # The new farmers from JSON likely have int IDs.
+    try:
+        f_id = int(farmer_id)
+    except:
+        f_id = farmer_id # Fallback
+        
+    for i, f in enumerate(farmers):
+        if f.get("farmerID") == f_id or str(f.get("farmerID")) == str(f_id):
+            target_idx = i
+            target_farmer = f
+            break
+            
+    if target_farmer:
+        # Update fields
+        # Mappings: name->farmerName, etc.
+        if "name" in profile_data: target_farmer["farmerName"] = profile_data["name"]
+        if "division" in profile_data: target_farmer["farmerDivision"] = profile_data["division"]
+        if "district" in profile_data: target_farmer["farmerDistrict"] = profile_data["district"]
+        if "upazila" in profile_data: target_farmer["farmerUpazila"] = profile_data["upazila"]
+        if "address" in profile_data: target_farmer["farmerAddress"] = profile_data["address"]
+        # Allow updating other fields directly if keys match
+        for k, v in profile_data.items():
+            if k.startswith("farmer"):
+                target_farmer[k] = v
+                
+        # Save back using the wrapper's update logic would be best if we had the key.
+        # But our wrapper .update(key, val, new_data) uses query.
+        # db_farmers.update("farmerID", f_id, target_farmer)
+        
+        # Let's try that:
+        success = db_farmers.update("farmerID", f_id, target_farmer)
+        if success:
+            return {
+                "message": "Profile updated successfully",
+                "user": target_farmer
+            }
+        
+    raise HTTPException(status_code=404, detail="User not found")
+
+@router.post("/profile/avatar/")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    farmer_id: str = Form(...) # We need to identify who to update
+):
+    # 1. Read file
+    contents = await file.read()
+    
+    # 2. Check size (2MB limit for example)
+    if len(contents) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image too large. Max 2MB.")
+        
+    # 3. Convert to Base64
+    base64_encoded = base64.b64encode(contents).decode("utf-8")
+    mime_type = file.content_type or "image/jpeg"
+    data_uri = f"data:{mime_type};base64,{base64_encoded}"
+    
+    # 4. Update in DB
+    farmers = db_farmers.load()
+    target_idx = -1
+    target_farmer = None
+    
+    # Match ID similar to update_profile logic
+    try:
+        f_id = int(farmer_id)
+    except:
+        f_id = farmer_id 
+        
+    for i, f in enumerate(farmers):
+        if f.get("farmerID") == f_id or str(f.get("farmerID")) == str(f_id):
+            target_idx = i
+            target_farmer = f
+            break
+            
+    if target_farmer:
+        target_farmer["farmerProfilePicture"] = data_uri
+        
+        # Use our updated update logic
+        success = db_farmers.update("farmerID", f_id, target_farmer)
+        if success:
+             return {
+                "message": "Avatar uploaded successfully",
+                "url": data_uri # Frontend can display this immediately
+            }
+            
+    raise HTTPException(status_code=404, detail="User not found")
 
 # --- Expert Auth Endpoints ---
 

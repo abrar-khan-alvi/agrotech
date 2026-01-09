@@ -39,5 +39,43 @@
         ],
         "evidence": "Image analysis detected Blast symptoms",
         "createdAt": "2023-10-27T00:00:00"
+    },
+    {
+        "reportId": 3,
+        "sourceType": "AI",
+        "sourceId": "AgroAI-v2.0",
+        "fieldId": 1,
+        "riskType": "pest",
+        "severity": "low",
+        "confidence": 0.95,
+        "advices": [
+            {
+                "action": "Regular monitoring required",
+                "priority": 1
+            },
+            {
+                "action": "Check for leaf spots",
+                "priority": 2
+            }
+        ],
+        "evidence": "Satellite imagery shows healthy canopy",
+        "createdAt": "2026-01-09T01:30:00"
+    },
+    {
+        "reportId": 4,
+        "sourceType": "AI",
+        "sourceId": "AgroAI-v2.0",
+        "fieldId": 2,
+        "riskType": "other",
+        "severity": "low",
+        "confidence": 0.80,
+        "advices": [
+            {
+                "action": "Monitor water level Abrar khan",
+                "priority": 1
+            }
+        ],
+        "evidence": "Test data for Field 2",
+        "createdAt": "2026-01-09T01:35:00"
     }
 ]

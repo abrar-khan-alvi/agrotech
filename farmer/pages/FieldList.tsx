@@ -54,7 +54,7 @@ const FieldList: React.FC = () => {
                 </div>
                 <div className="flex space-x-2">
                   <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-200 flex items-center h-8">
-                    {field.area}
+                    {field.area_in_acres ? `${field.area_in_acres} একর` : 'N/A'}
                   </span>
                   <button
                     onClick={(e) => {
@@ -69,11 +69,11 @@ const FieldList: React.FC = () => {
               </div>
 
               <h3 className="font-bold text-xl text-gray-800 mb-1 group-hover:text-leaf-700 transition-colors line-clamp-1">{field.name}</h3>
-              <p className="text-gray-500 text-sm mb-4">{field.crop || 'ফসল নেই'}</p>
+              <p className="text-gray-500 text-sm mb-4">{field.crop_type || 'ফসল নেই'}</p>
 
               <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
                 <span className="text-xs text-gray-400 flex items-center">
-                  <i className="fa-regular fa-clock mr-1"></i> {field.lastUpdate}
+                  <i className="fa-regular fa-clock mr-1"></i> {field.created_at ? new Date(field.created_at).toLocaleDateString('bn-BD') : 'N/A'}
                 </span>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 group-hover:bg-leaf-600 group-hover:text-white transition-all">
                   <i className="fa-solid fa-arrow-right text-sm"></i>

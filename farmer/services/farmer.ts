@@ -27,7 +27,8 @@ export const farmerService = {
 
     // AI Consultations
     getAIConsultations: async (fieldId?: string) => {
-        const response = await api.get('/ai-consultations/'); // Unified common endpoint
+        const params = fieldId ? { field_id: fieldId } : {};
+        const response = await api.get('/ai-consultations/', { params });
         return response.data;
     }
 };

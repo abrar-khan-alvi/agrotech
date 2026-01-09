@@ -7,6 +7,18 @@
             {
                 "lat": 23.8103,
                 "lng": 90.4125
+            },
+            {
+                "lat": 23.8103,
+                "lng": 90.4135
+            },
+            {
+                "lat": 23.8093,
+                "lng": 90.4135
+            },
+            {
+                "lat": 23.8093,
+                "lng": 90.4125
             }
         ],
         "fieldArea": 2.5,
@@ -20,13 +32,52 @@
         "fieldName": "South Garden",
         "fieldCoordinates": [
             {
-                "lat": 23.8000,
-                "lng": 90.4000
+                "lat": 23.8,
+                "lng": 90.4
+            },
+            {
+                "lat": 23.8,
+                "lng": 90.401
+            },
+            {
+                "lat": 23.799,
+                "lng": 90.401
+            },
+            {
+                "lat": 23.799,
+                "lng": 90.4
             }
         ],
         "fieldArea": 1.0,
         "fieldCropName": "Tomato",
         "fieldCropHarvestTime": "2024-01-15T00:00:00",
         "createTime": "2023-10-05T00:00:00"
+    },
+    {
+        "fieldID": 3,
+        "farmerID": 1,
+        "fieldName": "new",
+        "fieldCoordinates": [
+            {
+                "lat": 23.8156677083625,
+                "lng": 90.40738463401796
+            },
+            {
+                "lat": 23.81569715416308,
+                "lng": 90.4075562953949
+            },
+            {
+                "lat": 23.81581984492696,
+                "lng": 90.40756165981294
+            },
+            {
+                "lat": 23.815834567810835,
+                "lng": 90.40734708309175
+            }
+        ],
+        "fieldArea": 1.2,
+        "fieldCropName": "Mula",
+        "fieldCropHarvestTime": "2026-01-31",
+        "createTime": "2026-01-09T01:51:25.549379"
     }
 ]

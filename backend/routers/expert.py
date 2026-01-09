@@ -47,7 +47,23 @@ async def update_consultation(id: int, data: dict):
 
 @router.get("/experts/", response_model=List[dict])
 async def get_all_experts():
-    return db_experts.load()
+    experts = db_experts.load()
+    mapped_experts = []
+    
+    for e in experts:
+        mapped_experts.append({
+            "id": str(e.get("expertID")),
+            "user": e.get("expertID"), # Using ID as user ID equivalent
+            "name": e.get("expertName"),
+            "specialization": e.get("expertBio", "Agricultural Specialist"),
+            "title": "Senior Agriculturist", # Mock title
+            "experience_years": 5, # Mock experience
+            "rating": e.get("expertRating", 0),
+            "is_online": e.get("status") == "online",
+            "profile_picture": e.get("expertProfilePicture")
+        })
+        
+    return mapped_experts
 
 @router.get("/experts/{id}/", response_model=dict)
 async def get_expert_detail(id: int):

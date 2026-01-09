@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
    const field = fieldId ? fields.find(f => f.id === fieldId) : fields[0];
 
    const [weather, setWeather] = useState<WeatherData | null>(null);
-   const [iotData, setIoTData] = useState<IoTReading | null>(null);
+   const [iotData, setIoTData] = useState<IoTReading[]>([]);
    const [expertAdvice, setExpertAdvice] = useState<ExpertConsultAdvice[]>([]);
    const [aiAdvice, setAIAdvice] = useState<AIConsultation[]>([]);
 
@@ -77,7 +77,7 @@ const Dashboard: React.FC = () => {
          try {
             const iotResponse = await farmerService.getIoTReadings(field.id);
             if (iotResponse && iotResponse.length > 0) {
-               setIoTData(iotResponse[0]); // Latest
+               setIoTData(iotResponse); // Store all readings
             }
          } catch (e) {
             console.error("IoT fetch error", e);
@@ -115,12 +115,20 @@ const Dashboard: React.FC = () => {
       loadData();
    }, [field]);
 
-   if (!field) return <div className="p-8 text-center text-gray-400">তথ্য পাওয়া যায়নি (মাঠ নির্বাচন করুন)</div>;
-
    // Map Center
-   const mapCenter: [number, number] = field.center
-      ? [field.center.lat, field.center.lng]
-      : (field.boundary && field.boundary.length > 0 ? [field.boundary[0].lat, field.boundary[0].lng] : [23.8103, 90.4125]);
+   const mapCenter: [number, number] = React.useMemo(() => {
+      if (!field) return [23.8103, 90.4125];
+      // Prioritize calculating center from boundary if available
+      if (field.boundary && field.boundary.length > 0) {
+         const latSum = field.boundary.reduce((sum, c) => sum + c.lat, 0);
+         const lngSum = field.boundary.reduce((sum, c) => sum + c.lng, 0);
+         return [latSum / field.boundary.length, lngSum / field.boundary.length];
+      }
+      if (field.center) return [field.center.lat, field.center.lng];
+      return [23.8103, 90.4125];
+   }, [field]);
+
+   if (!field) return <div className="p-8 text-center text-gray-400">তথ্য পাওয়া যায়নি (মাঠ নির্বাচন করুন)</div>;
 
    // Map Polygon
    const polygonPositions: [number, number][] = field.boundary
@@ -356,8 +364,8 @@ const Dashboard: React.FC = () => {
          <div>
             <h3 className="font-bold text-gray-800 mb-4 px-1 flex items-center gap-2">
                <div className="relative flex h-3 w-3">
-                  {iotData && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
-                  <span className={`relative inline-flex rounded-full h-3 w-3 ${iotData ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                  {iotData.length > 0 && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${iotData.length > 0 ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                </div>
                লাইভ সেন্সর ডেটা (IoT)
             </h3>
@@ -368,10 +376,10 @@ const Dashboard: React.FC = () => {
                   <div className="relative z-10">
                      <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-gray-400 uppercase">Moisture</span>
-                        {iotData ? <i className="fa-solid fa-circle-check text-green-500"></i> : <i className="fa-solid fa-circle-xmark text-gray-300"></i>}
+                        {iotData.length > 0 ? <i className="fa-solid fa-circle-check text-green-500"></i> : <i className="fa-solid fa-circle-xmark text-gray-300"></i>}
                      </div>
                      <p className="text-3xl font-extrabold text-gray-800 tracking-tight">
-                        {iotData?.soil_moisture ? `${iotData.soil_moisture}%` : '--'}
+                        {iotData.length > 0 && iotData[0].soil_moisture ? `${iotData[0].soil_moisture}%` : '--'}
                      </p>
                      <p className="text-[10px] text-gray-400 mt-1">Real-time Sensor</p>
                   </div>
@@ -383,10 +391,10 @@ const Dashboard: React.FC = () => {
                   <div className="relative z-10">
                      <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-gray-400 uppercase">Temperature</span>
-                        {iotData ? <i className="fa-solid fa-circle-check text-green-500"></i> : <i className="fa-solid fa-circle-xmark text-gray-300"></i>}
+                        {iotData.length > 0 ? <i className="fa-solid fa-circle-check text-green-500"></i> : <i className="fa-solid fa-circle-xmark text-gray-300"></i>}
                      </div>
                      <p className="text-3xl font-extrabold text-gray-800 tracking-tight">
-                        {iotData?.soil_temperature ? `${iotData.soil_temperature}°C` : '--'}
+                        {iotData.length > 0 && iotData[0].soil_temperature ? `${iotData[0].soil_temperature}°C` : '--'}
                      </p>
                      <p className="text-[10px] text-gray-400 mt-1">Real-time Sensor</p>
                   </div>
@@ -396,15 +404,15 @@ const Dashboard: React.FC = () => {
                <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-5 rounded-2xl shadow-sm text-white flex flex-col justify-center">
                   <div className="flex justify-between divide-x divide-gray-700">
                      <div className="px-4 text-center">
-                        <span className="block text-xl font-bold text-emerald-400">{iotData?.nitrogen || '-'}</span>
+                        <span className="block text-xl font-bold text-emerald-400">{iotData.length > 0 ? iotData[0].nitrogen : '-'}</span>
                         <span className="text-[10px] uppercase text-gray-400">N</span>
                      </div>
                      <div className="px-4 text-center">
-                        <span className="block text-xl font-bold text-amber-400">{iotData?.phosphorus || '-'}</span>
+                        <span className="block text-xl font-bold text-amber-400">{iotData.length > 0 ? iotData[0].phosphorus : '-'}</span>
                         <span className="text-[10px] uppercase text-gray-400">P</span>
                      </div>
                      <div className="px-4 text-center">
-                        <span className="block text-xl font-bold text-blue-400">{iotData?.potassium || '-'}</span>
+                        <span className="block text-xl font-bold text-blue-400">{iotData.length > 0 ? iotData[0].potassium : '-'}</span>
                         <span className="text-[10px] uppercase text-gray-400">K</span>
                      </div>
                   </div>
@@ -414,6 +422,78 @@ const Dashboard: React.FC = () => {
                </div>
             </div>
          </div>
+
+         {/* 3.1 IoT History Table */}
+         {iotData.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                     <i className="fa-solid fa-clock-rotate-left text-blue-500"></i>
+                     সেন্সর ইতিহাস (সর্বশেষ ১০টি)
+                  </h3>
+               </div>
+               <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                     <thead className="bg-gray-50 text-gray-500 font-medium">
+                        <tr>
+                           <th className="px-6 py-4">সময়</th>
+                           <th className="px-6 py-4">তাপমাত্রা</th>
+                           <th className="px-6 py-4">আর্দ্রতা</th>
+                           <th className="px-6 py-4">Nutrients (N-P-K)</th>
+                           <th className="px-6 py-4">অবস্থা</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-100">
+                        {iotData.slice(0, 10).map((item, idx) => (
+                           <tr key={item.id || idx} className="hover:bg-gray-50/50 transition-colors">
+                              <td className="px-6 py-4 text-gray-700 font-medium">
+                                 {new Date(item.recorded_at).toLocaleString('bn-BD')}
+                              </td>
+                              <td className="px-6 py-4 text-gray-600">
+                                 {item.soil_temperature}°C
+                              </td>
+                              <td className="px-6 py-4 text-gray-600">
+                                 {item.soil_moisture}%
+                              </td>
+                              <td className="px-6 py-4">
+                                 <div className="flex gap-2 text-xs font-bold">
+                                    <span className="bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100">N: {item.nitrogen}</span>
+                                    <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100">P: {item.phosphorus}</span>
+                                    <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100">K: {item.potassium}</span>
+                                 </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                 {(() => {
+                                    let statusText = 'স্বাভাবিক';
+                                    let statusColor = 'bg-emerald-100 text-emerald-700';
+                                    let dotColor = 'bg-emerald-500';
+
+                                    const moisture = parseFloat(item.soil_moisture as any) || 0;
+
+                                    if (moisture < 30) {
+                                       statusText = 'শুষ্ক';
+                                       statusColor = 'bg-amber-100 text-amber-700';
+                                       dotColor = 'bg-amber-500';
+                                    } else if (moisture > 80) {
+                                       statusText = 'আর্দ্র';
+                                       statusColor = 'bg-blue-100 text-blue-700';
+                                       dotColor = 'bg-blue-500';
+                                    }
+                                    return (
+                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                          <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
+                                          {statusText}
+                                       </span>
+                                    );
+                                 })()}
+                              </td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+            </div>
+         )}
 
          {/* 3. Analysis Forecast */}
          {weather && (
@@ -535,9 +615,16 @@ const Dashboard: React.FC = () => {
                               <span>স্বয়ংক্রিয় বিশ্লেষণ</span>
                               <span>{new Date(ai.created_at).toLocaleDateString()}</span>
                            </div>
-                           <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
-                              {JSON.stringify(ai.advice, null, 2)}
-                           </pre>
+                           <div className="mt-2 space-y-2">
+                              {Array.isArray(ai.advice) && ai.advice.map((item: any, idx: number) => (
+                                 <div key={idx} className="bg-white p-2 rounded border border-purple-100 flex items-start gap-2">
+                                    <div className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${item.priority === 1 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                                       {item.priority}
+                                    </div>
+                                    <span className="text-sm text-gray-700">{item.action}</span>
+                                 </div>
+                              ))}
+                           </div>
                         </div>
                      ))
                   ) : (

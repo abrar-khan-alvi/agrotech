@@ -1,16 +1,44 @@
 [
     {
-        "ioTDataID": 1001,
+        "ioTDataID": 1003,
         "fieldID": 1,
         "locationLat": 23.8103,
         "locationLng": 90.4125,
+        "soilTemp": 30.5,
+        "soilMoisture": 55.2,
+        "soilPH": 6.8,
+        "soilEC": 1.5,
+        "soilN": 18.0,
+        "soilP": 6.0,
+        "soilK": 12.0,
+        "createTime": "2026-01-09T00:15:00"
+    },
+    {
+        "ioTDataID": 1001,
+        "fieldID": 2,
+        "locationLat": 23.8000,
+        "locationLng": 90.4000,
         "soilTemp": 28.5,
-        "soilMoisture": 45.2,
+        "soilMoisture": 25.2,
         "soilPH": 6.5,
         "soilEC": 1.2,
+        "soilN": 18.0,
+        "soilP": 5.0,
+        "soilK": 9.0,
+        "createTime": "2026-01-09T00:12:00"
+    },
+    {
+        "ioTDataID": 1002,
+        "fieldID": 1,
+        "locationLat": 23.8103,
+        "locationLng": 90.4125,
+        "soilTemp": 20.5,
+        "soilMoisture": 25.2,
+        "soilPH": 7.5,
+        "soilEC": 2.2,
         "soilN": 15.0,
         "soilP": 5.0,
         "soilK": 10.0,
-        "createTime": "2023-10-27T10:00:00"
+        "createTime": "2026-01-09T00:13:00"
     }
 ]

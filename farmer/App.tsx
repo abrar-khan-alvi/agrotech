@@ -151,6 +151,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         area_in_acres: f.fieldArea || f.area_in_acres,
         boundary: f.fieldCoordinates || f.boundary,
         center: f.center || (f.fieldCoordinates && f.fieldCoordinates[0]) || { lat: 23.8, lng: 90.4 },
+        created_at: f.createTime || f.created_at,
         lastUpdate: new Date(f.createTime || f.created_at || Date.now()).toLocaleDateString(),
         soilHealth: { nitrogen: 'Unknown', phosphorus: 'Unknown', potassium: 'Unknown', phLevel: 0 }, // Placeholder until sensor data
         sensorData: { moisture: '--', temperature: '--', humidity: '--' },
