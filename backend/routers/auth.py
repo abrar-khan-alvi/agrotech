@@ -100,16 +100,16 @@ async def register_farmer(req: dict):
         farmerUpazila=req.get("upazila", ""),
         farmerAddress=req.get("address", ""),
         farmerPassword=req.get("password", ""), # Save password
+        farmerNID=req.get("nid", ""),
+        farmerProfilePicture=req.get("profilePicture", ""),
+        isSmartPhoneUser=req.get("isSmartPhoneUser", True),
         createTime=datetime.now().isoformat()
     )
     
     db_farmers.add(new_farmer.dict())
     
     return {
-        "access": MOCK_TOKENS["access"],
-        "refresh": MOCK_TOKENS["refresh"],
-        "user": new_farmer.dict(),
-        "message": "Registration successful"
+        "message": "Registration successful. Please login."
     }
 
 @router.post("/auth/login/")
@@ -129,6 +129,21 @@ async def login_farmer(req: LoginRequest):
             }
     
     raise HTTPException(status_code=400, detail="Invalid credentials")
+
+@router.get("/profile/")
+async def get_profile(id: str):
+    farmers = db_farmers.load()
+    # Normalize ID comparison
+    try:
+        f_id = int(id)
+    except:
+        f_id = id
+        
+    farmer_data = next((f for f in farmers if f.get("farmerID") == f_id or str(f.get("farmerID")) == str(f_id)), None)
+    
+    if farmer_data:
+        return farmer_data
+    raise HTTPException(status_code=404, detail="User not found")
 
 @router.patch("/profile/")
 async def update_profile(profile_data: dict):

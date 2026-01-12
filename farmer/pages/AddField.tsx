@@ -33,7 +33,7 @@ const MapEvents: React.FC<{ setCoordinates: React.Dispatch<React.SetStateAction<
 };
 
 const AddField: React.FC = () => {
-   const { addField } = useAppContext();
+   const { addField, user } = useAppContext();
    const navigate = useNavigate();
    const [step, setStep] = useState<'MAP' | 'INFO'>('MAP');
    const [coordinates, setCoordinates] = useState<L.LatLng[]>([]);
@@ -85,7 +85,8 @@ const AddField: React.FC = () => {
             const angleB = Math.atan2(b.lat - centerLat, b.lng - centerLng);
             return angleA - angleB;
          }).map(c => ({ lat: c.lat, lng: c.lng })),
-         center: center
+         center: center,
+         farmerID: user?.id ? (isNaN(Number(user.id)) ? user.id : Number(user.id)) : 1 // Send Current User ID
       };
 
       console.log('Submitting Payload:', payload);

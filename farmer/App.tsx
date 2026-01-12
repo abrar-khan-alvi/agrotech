@@ -128,19 +128,69 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Load User from LocalStorage on mount
   React.useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-      fetchFields(); // Load fields if logged in
-      fetchRequests(); // Load requests 
-    }
-    setLoading(false);
+    const savedUserStr = localStorage.getItem('user');
+
+    const init = async () => {
+      if (token && savedUserStr) {
+        const savedUser = JSON.parse(savedUserStr);
+        // Optimistically set user from local storage
+        setUser(savedUser);
+
+        try {
+          // Fetch fresh data from backend
+          const { default: api } = await import('./services/api');
+          const res = await api.get(`/profile/?id=${savedUser.id}`);
+          const backendUser = res.data;
+
+          // Map backend user to frontend profile
+          const freshUser: FarmerProfile = {
+            id: backendUser.id || backendUser.farmerID,
+            name: backendUser.name || backendUser.farmerName,
+            phone: backendUser.phone || backendUser.farmerPhoneNumber,
+            division: backendUser.division || backendUser.farmerDivision,
+            district: backendUser.district || backendUser.farmerDistrict,
+            upazila: backendUser.upazila || backendUser.farmerUpazila,
+            address: backendUser.address || backendUser.farmerAddress,
+            profile_picture: backendUser.profile_picture || backendUser.farmerProfilePicture || savedUser.profile_picture,
+            password: backendUser.farmerPassword,
+            nid: backendUser.farmerNID,
+            verified: true,
+            role: 'farmer'
+          };
+
+          setUser(freshUser);
+
+          // DATA SIZE OPTIMIZATION
+          const { profile_picture, nid_photo, ...storageUser } = freshUser;
+          try {
+            localStorage.setItem('user', JSON.stringify(storageUser));
+          } catch (e) {
+            console.warn("LocalStorage Quota Exceeded", e);
+          }
+
+          fetchFields(freshUser.id);
+          fetchRequests();
+        } catch (err) {
+          console.error("Failed to fetch fresh profile", err);
+          // If 404, maybe logout? For now just keep local state.
+          fetchFields();
+          fetchRequests();
+        }
+      }
+      setLoading(false);
+    };
+
+    init();
   }, []);
 
-  const fetchFields = async () => {
+  const fetchFields = async (userId?: string) => {
     try {
       const { default: api } = await import('./services/api');
-      const res = await api.get('/fields/');
+
+      const idToUse = userId || user?.id;
+      if (!idToUse) return; // Don't fetch if no user ID
+
+      const res = await api.get(`/fields/?farmer_id=${idToUse}`);
       // Transform Backend Field to Frontend Field
       const mappedFields = res.data.map((f: any) => ({
         id: (f.fieldID || f.id).toString(),
@@ -183,9 +233,16 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const login = (profile: FarmerProfile, token?: string) => {
     setUser(profile);
-    localStorage.setItem('user', JSON.stringify(profile));
+
+    // DATA SIZE OPTIMIZATION
+    const { profile_picture, nid_photo, ...storageUser } = profile;
+    try {
+      localStorage.setItem('user', JSON.stringify(storageUser));
+    } catch (e) {
+      console.warn("Storage quota exceeded", e);
+    }
     if (token) localStorage.setItem('accessToken', token);
-    fetchFields();
+    fetchFields(profile.id);
   };
 
   const logout = () => {

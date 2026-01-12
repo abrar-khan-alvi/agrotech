@@ -12,10 +12,18 @@ db_iot = FirebaseDatabase("iot_data")
 
 @router.get("/fields/", response_model=List[dict]) # Return dicts as they come from JSON
 @router.get("/fields/", response_model=List[dict])
-async def get_fields():
+async def get_fields(farmer_id: Optional[str] = None):
     fields = db_fields.get_all()
     mapped_fields = []
     
+    # Filter by farmer_id
+    if farmer_id:
+        try:
+            f_id = int(farmer_id)
+            fields = [f for f in fields if f.get("farmerID") == f_id or str(f.get("farmerID")) == farmer_id]
+        except:
+             fields = [f for f in fields if str(f.get("farmerID")) == farmer_id]
+
     for f in fields:
         mapped_fields.append({
             "id": str(f.get("fieldID")),
@@ -35,7 +43,8 @@ async def create_field(field_data: dict):
     
     new_field = Field(
         fieldID=len(fields) + 1,
-        farmerID=1, # Hardcoded for now (mock user 1)
+
+        farmerID=field_data.get("farmerID", 1), # Use provided ID or default mock
         fieldName=field_data.get("fieldName") or field_data.get("name", "New Field"),
         fieldCoordinates=field_data.get("fieldCoordinates") or field_data.get("boundary", []),
         fieldArea=field_data.get("fieldArea") or field_data.get("area_in_acres", 0.0),

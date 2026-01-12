@@ -97,6 +97,7 @@ const Login: React.FC = () => {
       district: backendUser.farmerDistrict || '',
       upazila: backendUser.farmerUpazila || '',
       address: backendUser.farmerAddress || '',
+      profile_picture: backendUser.farmerProfilePicture || '',
       verified: true,
       role: 'farmer'
     };

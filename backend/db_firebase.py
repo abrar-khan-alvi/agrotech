@@ -107,7 +107,7 @@ class FirebaseDatabase:
         
     def _find_primary_key(self, item: Dict[str, Any]) -> Optional[Any]:
         # Helper to guess common ID fields
-        for k in ['fieldID', 'id', 'reportId', 'ioTDataID', 'consultation_id']:
+        for k in ['fieldID', 'id', 'reportId', 'ioTDataID', 'consultation_id', 'farmerID', 'expertID']:
             if k in item:
                 return item[k]
         return None

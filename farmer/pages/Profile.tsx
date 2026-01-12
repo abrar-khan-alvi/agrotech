@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { authService } from '../services/authService';
 
 const Profile: React.FC = () => {
     const { user, logout, login } = useAppContext();
@@ -26,18 +27,36 @@ const Profile: React.FC = () => {
     const handleSave = async () => {
         setIsLoading(true);
         try {
-            const data = new FormData();
-            data.append('name', name);
-            if (selectedFile) {
-                data.append('profile_picture', selectedFile);
+            let updatedUser = { ...user };
+
+            // 1. Update Basic Info if changed
+            if (name !== user.name) {
+                const response = await authService.updateProfile({
+                    id: user.id,
+                    name: name
+                });
+                updatedUser = { ...updatedUser, ...response.user, name: response.user.farmerName || name };
             }
 
-            const response = await api.patch('profile/', data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            // 2. Upload Avatar if selected
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('farmer_id', user.id); // Validated backend requirement
 
-            // Update App Context with new user data
-            login(response.data.user);
+                const response = await authService.uploadAvatar(formData);
+                updatedUser.profile_picture = response.url; // Update local state directly with new URL
+            }
+
+            // Update Context
+            const mappedUser = {
+                ...updatedUser,
+                // Ensure mapping is consistent because backend returns raw objects usually
+                name: updatedUser.farmerName || updatedUser.name,
+                profile_picture: updatedUser.farmerProfilePicture || updatedUser.profile_picture
+            };
+
+            login(mappedUser, undefined); // Update user in context, keep token
             setIsEditing(false);
             alert('প্রোফাইল আপডেট হয়েছে!');
         } catch (error) {

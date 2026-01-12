@@ -20,9 +20,12 @@ export interface FarmerProfile {
   upazila: string;
   address: string;
   nidUrl?: string; // Mock URL (deprecated)
+  nid?: string;
   nid_photo?: string; // URL from backend
   profile_picture?: string; // URL from backend
   password?: string; // In real app, never store plain text
+  verified?: boolean;
+  role?: string;
 }
 
 export interface SoilHealth {
