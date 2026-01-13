@@ -10,6 +10,7 @@ import { ExpertRequest, RequestStatus, Urgency } from '../types';
 
 import toast from 'react-hot-toast';
 import { FirebaseService } from '../services/FirebaseService';
+import { expert } from '../services/api';
 
 export const Layout: React.FC = () => {
   const { state, dispatch } = useStore();
@@ -92,14 +93,27 @@ export const Layout: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const handleToggleOnline = () => {
+  const handleToggleOnline = async () => {
+    if (!state.user?.id) return;
+
     setLoading(true);
-    // OPTIMISTIC UPDATE: Update UI immediately
+    const newStatus = !state.isOnline;
+
+    // OPTIMISTIC UPDATE
     dispatch({ type: 'TOGGLE_ONLINE_STATUS' });
-    // Simulate API call or if we had a socket available here we would use it.
-    // For now, since we are moving away from raw socket in Context to NotificationService (which is mostly receive-only or specialized),
-    // we might just stick to the optimistic update or call an API endpoint if we had one.
-    setTimeout(() => setLoading(false), 500);
+
+    try {
+      // Call API to persist
+      // We pass expertID so the backend knows who to update
+      await expert.updateStatus(newStatus, state.user.id);
+    } catch (error) {
+      console.error("Failed to update status", error);
+      // Revert on failure
+      dispatch({ type: 'TOGGLE_ONLINE_STATUS' });
+      toast.error("Failed to update online status");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const navItemClass = (path: string) => `

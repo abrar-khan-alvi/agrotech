@@ -128,6 +128,7 @@ export interface Expert {
   title: string;
   experience_years: number;
   rating: number;
+  bio?: string;
 }
 
 export interface Advisory {
