@@ -88,8 +88,9 @@ export const auth = {
 
 // Expert Services
 export const expert = {
-    getProfile: async () => {
-        const response = await api.get('/expert/profile/');
+    getProfile: async (id?: string) => {
+        const query = id ? `?id=${id}` : '';
+        const response = await api.get(`/expert/profile/${query}`);
         return response.data;
     },
 
@@ -98,8 +99,10 @@ export const expert = {
         return response.data;
     },
 
-    updateStatus: async (isOnline: boolean) => {
-        const response = await api.patch('/expert/profile/', { is_online: isOnline });
+    updateStatus: async (isOnline: boolean, id?: string) => {
+        const payload: any = { is_online: isOnline };
+        if (id) payload.expertID = id;
+        const response = await api.patch('/expert/profile/', payload);
         return response.data;
     },
 

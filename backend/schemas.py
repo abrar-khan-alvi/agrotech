@@ -72,6 +72,7 @@ class Expert(BaseModel):
     expertAddress: str
     expertPhoneNumber: str
     expertEmail: Optional[str] = None
+    expertPassword: Optional[str] = None
     expertProfilePicture: Optional[str] = None
     expertNID: Optional[str] = None
     expertDigitalCertificate: Optional[str] = None

@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { StoreProvider } from './context/StoreContext';
 import { Layout } from './components/Layout';
-import { Login } from './components/Login';
+import Login from './pages/Login';
 import { Register } from './components/Register';
 import CompleteProfile from './pages/CompleteProfile';
 import { Dashboard } from './components/Dashboard';

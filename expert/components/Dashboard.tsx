@@ -69,9 +69,7 @@ export const Dashboard: React.FC = () => {
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Earnings</span>
             </div>
             <p className="text-3xl font-black text-slate-800 tracking-tight">৳{earnings}</p>
-            <div className="flex items-center gap-1 mt-2 text-[11px] font-bold text-emerald-600">
-              <TrendingUp className="w-3 h-3" /> +12% this week
-            </div>
+
             <div className="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center text-xs">
               <span className="text-gray-400">Rate/Report</span>
               <span className="font-bold text-slate-700">৳{user?.per_report_rate || 50}</span>
