@@ -17,7 +17,7 @@ export interface Farmer {
   name: string;
   location: string;
   phone: string;
-  avatar: string;
+  avatar?: string;
   experienceLevel: string;
   fields?: {
     id: number;
@@ -121,6 +121,6 @@ export interface User {
   qualification: string;
   experience: string;
   isVerified: boolean;
-  avatar: string;
+  avatar?: string;
   bio: string;
 }
