@@ -185,7 +185,8 @@ const Experts: React.FC = () => {
                                  </div>
                               </div>
                               <p className="text-xs text-leaf-600 font-medium mb-0.5">{expert.title}</p>
-                              <p className="text-xs text-gray-500 mb-1">{expert.specialization}</p>
+                              <p className="text-xs text-gray-500 mb-1 font-semibold">{expert.specialization}</p>
+                              {expert.bio && <p className="text-[11px] text-gray-400 mb-2 line-clamp-2 leading-tight">{expert.bio}</p>}
                               <div className="flex items-center space-x-2 text-[10px] text-gray-400">
                                  <span className="bg-gray-100 px-2 py-0.5 rounded flex items-center">
                                     <i className="fa-solid fa-briefcase mr-1"></i>
