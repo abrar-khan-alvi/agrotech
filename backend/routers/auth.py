@@ -33,7 +33,7 @@ MOCK_TOKENS = {
 def normalize_phone(phone: Any) -> str:
     if not phone:
         return ""
-    p = str(phone).strip()
+    p = str(phone).strip().replace("+88", "").replace("-", "").replace(" ", "")
     return p.lstrip("0")
 
 # --- Farmer Auth Endpoints ---
@@ -254,6 +254,21 @@ async def upload_avatar(
 
 # --- Expert Auth Endpoints ---
 
+# --- Expert Auth Endpoints ---
+
+@router.post("/experts/auth/check-status/")
+async def check_expert_status(req: PhoneRequest):
+    experts = db_experts.load()
+    print(f"DEBUG: Checking expert status for {req.phone}")
+    
+    req_phone_norm = normalize_phone(req.phone)
+    expert = next((e for e in experts if normalize_phone(e.get("expertPhoneNumber")) == req_phone_norm), None)
+    
+    if expert:
+        is_password_set = bool(expert.get("expertPassword"))
+        return {"exists": True, "hasPassword": is_password_set}
+    return {"exists": False}
+
 @router.post("/experts/auth/otp/send/")
 async def send_otp_expert(req: PhoneRequest):
     return {"message": "OTP sent successfully", "otp": "5678"}
@@ -261,28 +276,75 @@ async def send_otp_expert(req: PhoneRequest):
 @router.post("/experts/auth/otp/verify/")
 async def verify_otp_expert(req: VerifyOtpRequest):
     if req.code == "5678":
-        experts = db_experts.load()
-        expert_data = next((e for e in experts if e["expertPhoneNumber"] == req.phone), None)
-        
-        # If expert doesn't exist in mock DB, create a dummy or just return basic info for now (register flow)
-        uid = str(expert_data["expertID"]) if expert_data else "new_expert"
-
+        # In this flow, OTP is primarily for new users registration
         return {
-            "token": MOCK_TOKENS["access"],
-            "uid": uid,
+            "message": "OTP Verified",
             "phone": req.phone
         }
     raise HTTPException(status_code=400, detail="Invalid OTP")
 
 @router.post("/experts/auth/register/")
 async def register_expert(req: dict):
-    # Ignoring detailed register implementation for expert for brevity, but pattern is same
-    pass
+    experts = db_experts.load()
+    
+    # Generate ID
+    # If list is empty, start at 1. If not, max + 1.
+    new_id = 1
+    if experts:
+        ids = [int(e.get("expertID", 0)) for e in experts if str(e.get("expertID", "0")).isdigit()]
+        if ids:
+            new_id = max(ids) + 1
+            
+    # Create Expert object
+    try:
+        new_expert = Expert(
+            expertID=new_id,
+            expertName=req.get("expertName", "New Expert"),
+            expertDivision=req.get("expertDivision", ""),
+            expertDistrict=req.get("expertDistrict", ""),
+            expertUpazila=req.get("expertUpazila", ""),
+            expertAddress=req.get("expertAddress", ""),
+            expertPhoneNumber=req.get("expertPhoneNumber", ""),
+            expertEmail=req.get("expertEmail", ""),
+            expertProfilePicture=req.get("expertProfilePicture"),
+            expertNID=req.get("expertNID"),
+            expertDigitalCertificate=req.get("expertDigitalCertificate"),
+            expertBio=req.get("expertBio"),
+            expertPassword=req.get("expertPassword"), # Critical
+            createTime=datetime.now().isoformat(),
+            status=UserStatus.OFFLINE
+        )
+        
+        db_experts.add(new_expert.dict())
+        
+        return {
+            "message": "Registration successful",
+            "expertID": new_id
+        }
+    except Exception as e:
+        print(f"Registration Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/experts/auth/login/")
 async def login_expert(req: LoginRequest):
-    # Simple mock login
-    pass
+    experts = db_experts.load()
+    req_phone_norm = normalize_phone(req.phone)
+    
+    expert = next((e for e in experts if normalize_phone(e.get("expertPhoneNumber")) == req_phone_norm), None)
+    
+    if expert:
+        stored_password = expert.get("expertPassword")
+        if stored_password and stored_password == req.password:
+             return {
+                "access": MOCK_TOKENS["access"],
+                "refresh": MOCK_TOKENS["refresh"],
+                "uid": expert.get("expertID"),
+                "phone": expert.get("expertPhoneNumber"),
+                "name": expert.get("expertName"),
+                "role": "expert"
+            }
+    
+    raise HTTPException(status_code=400, detail="Invalid credentials")
 
 # --- Common ---
 
