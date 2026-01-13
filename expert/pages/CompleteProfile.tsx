@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { storage } from '../services/firebaseConfig';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { User, MapPin, Mail, FileText, Loader2, Lock, Upload, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,7 +8,19 @@ import { useStore } from '../context/StoreContext';
 
 const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
+
+    // Initial phone from navigation state
+    const initialPhone = location.state?.phone || '';
+
+    // Check if we came from OTP verify
+    useEffect(() => {
+        if (!initialPhone) {
+            toast.error("Unauthorized access");
+            navigate('/login');
+        }
+    }, [initialPhone, navigate]);
 
     // File States
     const [nidFile, setNidFile] = useState<File | null>(null);
@@ -25,6 +36,7 @@ const CompleteProfile: React.FC = () => {
         upazila: '',
         address: '',
         bio: '',
+        nid: '', // Added NID text field if needed, or file implies it
         specialization: 'General Agriculture'
     });
 
@@ -49,7 +61,7 @@ const CompleteProfile: React.FC = () => {
                 img.src = event.target?.result as string;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // Limit width to keep payload size manageable
+                    const MAX_WIDTH = 800;
                     const scaleSize = MAX_WIDTH / img.width;
                     canvas.width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
                     canvas.height = (img.width > MAX_WIDTH) ? (img.height * scaleSize) : img.height;
@@ -57,7 +69,7 @@ const CompleteProfile: React.FC = () => {
                     const ctx = canvas.getContext('2d');
                     if (ctx) {
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to 70% quality
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
                     } else {
                         reject(new Error("Canvas context not found"));
                     }
@@ -73,22 +85,10 @@ const CompleteProfile: React.FC = () => {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                toast.error("User not found. Please login again.");
-                navigate('/login');
-                return;
-            }
-
-            // Decode token to get UID/Phone (basic decode)
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const uid = payload.uid;
-            const phone = payload.phone;
-
-            // 1. Upload Files
+            // 1. Prepare Base64 strings
             let nidUrl = null;
             let certUrl = null;
-            let avatarUrl = null; // No existing avatar from Firebase Auth
+            let avatarUrl = null;
 
             if (avatarFile) {
                 avatarUrl = await compressImage(avatarFile);
@@ -100,58 +100,34 @@ const CompleteProfile: React.FC = () => {
                 certUrl = await compressImage(certFile);
             }
 
-            // 2. Link Email/Password & Update Profile
-            if (formData.password) {
-                await axios.post('http://127.0.0.1:8000/api/v1/auth/register', {
-                    phone: phone || '',
-                    password: formData.password,
-                    role: 'expert'
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            }
-
-            // 3. Update Backend Profile
-            const profilePayload = {
-                personalDetails: {
-                    name: formData.name,
-                    email: formData.email,
-                    phone: phone,
-                    division: formData.division,
-                    district: formData.district,
-                    upazila: formData.upazila,
-                    address: formData.address,
-                    nidHash: nidUrl,
-                    digitalCertificate: certUrl,
-                    bio: formData.bio,
-                    profilePicture: avatarUrl
-                },
+            // 2. Build Payload
+            const payload = {
+                expertName: formData.name,
+                expertDivision: formData.division,
+                expertDistrict: formData.district,
+                expertUpazila: formData.upazila,
+                expertAddress: formData.address,
+                expertPhoneNumber: initialPhone,
+                expertEmail: formData.email,
+                expertProfilePicture: avatarUrl,
+                expertNID: nidUrl, // Assuming storing base64 for now or needs text?
+                expertDigitalCertificate: certUrl,
+                expertBio: formData.bio,
+                expertPassword: formData.password
             };
 
-            await axios.patch('http://127.0.0.1:8000/api/v1/expert/profile/', profilePayload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // 3. Register Call
+            const res = await axios.post('http://127.0.0.1:8000/api/v1/experts/auth/register/', payload);
 
-            // 4. Update Context
-            dispatch({
-                type: 'LOGIN',
-                payload: {
-                    id: uid,
-                    name: formData.name,
-                    phone: phone || '',
-                    role: 'expert' as any,
-                    region: formData.district,
-                    isVerified: true,
-                    avatar: avatarUrl || undefined
-                }
-            });
+            if (res.status === 200) {
+                toast.success("Registration Successful! Please Login.");
+                navigate('/login');
+            }
 
-            toast.success("Profile completed successfully!");
-            navigate('/expert/dashboard');
-
-        } catch (error) {
-            console.error("Profile update failed", error);
-            toast.error("Failed to update profile. Please try again.");
+        } catch (error: any) {
+            console.error("Registration failed", error);
+            const msg = error.response?.data?.detail || "Registration failed. Please try again.";
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -161,8 +137,9 @@ const CompleteProfile: React.FC = () => {
         <div className="min-h-screen bg-green-50 flex items-center justify-center p-6">
             <div className="bg-white max-w-3xl w-full rounded-2xl shadow-xl p-8">
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold text-green-800">Complete Your Profile</h1>
-                    <p className="text-gray-500 mt-2">Upload your documents to become a verified expert</p>
+                    <h1 className="text-3xl font-bold text-green-800">Expert Registration</h1>
+                    <p className="text-gray-500 mt-2">Please provide your professional details</p>
+                    <p className="text-green-600 font-medium mt-1">Mobile: {initialPhone}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -250,7 +227,7 @@ const CompleteProfile: React.FC = () => {
                                 value={formData.division}
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                                placeholder="Associated Division"
+                                placeholder="Dhaka"
                                 required
                             />
                         </div>
@@ -262,7 +239,7 @@ const CompleteProfile: React.FC = () => {
                                 value={formData.district}
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                                placeholder="Associated District"
+                                placeholder="Dhaka"
                                 required
                             />
                         </div>
@@ -274,7 +251,7 @@ const CompleteProfile: React.FC = () => {
                                 value={formData.upazila}
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                                placeholder="Associated Upazila"
+                                placeholder="Savar"
                                 required
                             />
                         </div>
@@ -365,7 +342,7 @@ const CompleteProfile: React.FC = () => {
                         disabled={loading}
                         className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2"
                     >
-                        {loading ? <Loader2 className="animate-spin" /> : "Submit for Verification"}
+                        {loading ? <Loader2 className="animate-spin" /> : "Complete Registration"}
                     </button>
                 </form>
             </div>
